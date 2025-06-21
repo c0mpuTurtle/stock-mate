@@ -18,10 +18,10 @@ public class Manager {
     @Column(name = "id", columnDefinition = "bigint", nullable = false)
     private Long id;
 
-    @Column(name = "student_id", columnDefinition = "varchar(20)", nullable = false)
+    @Column(name = "login_id", columnDefinition = "varchar(20)", nullable = false)
     private String loginId;
 
-    @Column(name = "department", columnDefinition = "varchar(50)", nullable = false)
+    @Column(name = "password", columnDefinition = "varchar(50)", nullable = false)
     private String password;
 
     @Column(name = "name", columnDefinition = "varchar(50)", nullable = false)
