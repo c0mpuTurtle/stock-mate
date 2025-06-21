@@ -17,9 +17,9 @@ public class SalesController {
     private final SalesService salesService;
 
     @GetMapping("/sales/total")
-    public String showSalesTotal(@RequestParam(required = false) String startDate,
-                                 @RequestParam(required = false) String endDate,
-                                 @RequestParam(defaultValue = "month") String unit,
+    public String showSalesTotal(@RequestParam(defaultValue = "month") String unit,
+                                 @RequestParam(defaultValue = "2025-01") String startDate,
+                                 @RequestParam(defaultValue = "2025-06") String endDate,
                                  Model model) {
 
         if (startDate == null || endDate == null) {
