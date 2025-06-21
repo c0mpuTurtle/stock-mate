@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>날짜별 매출액</title>
+    <title>상품별 매출액</title>
     <link href="https://cdn.jsdelivr.net/npm/suitcss@0.0.1/dist/suit.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
@@ -34,9 +34,6 @@
             gap: 0.5rem;
             color: #0c4a6e;
         }
-        .header-title .icon {
-            font-size: 1.8rem;
-        }
         .login-button {
             background-color: #0c4a6e;
             color: white;
@@ -49,17 +46,11 @@
             max-width: 1200px;
             margin: 3rem auto;
             background-color: white;
-            padding-top:3rem;
-            padding-left:3rem;
-            padding-right: 3rem;
-            padding-bottom:2rem;
+            padding: 3rem;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
             text-align: center;
             position: relative;
-        }
-        form {
-            margin-bottom: 1rem;
         }
         select, input[type="text"], button {
             padding: 0.5rem 1rem;
@@ -73,28 +64,14 @@
             color: white;
             cursor: pointer;
         }
-        button:hover {
-            background-color: #2563eb;
-        }
-        .notice {
-            font-weight: 500;
-            color: #475569;
-            margin-bottom: 2rem;
-        }
-        canvas {
-            max-width: 100%;
-            height: 400px !important;
-        }
         .top-right {
             position: absolute;
             top: 2rem;
             right: 3rem;
         }
-        #total-sales {
-            font-weight: 600;
-            margin-top: 1.5rem;
-            color: #1e3a8a;
-            font-size: 1.2rem;
+        canvas {
+            max-width: 100%;
+            height: 500px !important;
         }
     </style>
 </head>
@@ -102,8 +79,8 @@
 
 <header>
     <div class="header-title">
-        <span class="icon">📊</span>
-        <span>날짜별 매출 시각화</span>
+        <span>📦</span>
+        <span>상품별 매출 현황</span>
     </div>
     <a th:href="@{/login}" class="login-button">로그인</a>
 </header>
@@ -113,9 +90,7 @@
         <a th:href="@{/home}" class="login-button">← 메인으로 돌아가기</a>
     </div>
 
-    <h1>날짜별 매출액 시각화</h1>
-
-    <form method="get" th:action="@{/sales/total}" onsubmit="return validateForm();">
+    <form method="get" th:action="@{/sales/product}" onsubmit="return validateForm();">
         <label for="unit">단위 선택</label>
         <select name="unit" id="unit">
             <option value="day" th:selected="${unit == 'day'}">일별</option>
@@ -131,27 +106,22 @@
         <button type="submit">조회</button>
     </form>
 
-    <p class="notice">※ 이 매장은 <strong>2025년 1월 22일</strong>부터 영업되었습니다.</p>
-
-    <canvas id="salesChart"></canvas>
-    <p id="total-sales"></p>
+    <canvas id="productSalesChart"></canvas>
 </div>
 
 <script th:inline="javascript">
-    const labels = [[${labels}]];
-    const salesData = [[${salesData}]];
-    const dataMax = Math.max(...salesData);
-    const maxValue = dataMax > 0 ? Math.ceil(dataMax * 1.1) : 100000000;
+    const productLabels = [[${productLabels}]]; // 상품명 배열
+    const productSales = [[${productSales}]];   // 상품별 총 매출액 배열
 
-    const ctx = document.getElementById('salesChart').getContext('2d');
+    const ctx = document.getElementById('productSalesChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: productLabels,
             datasets: [{
-                label: '총 매출액',
-                data: salesData,
-                backgroundColor: '#3b82f6'
+                label: '상품별 총 매출액',
+                data: productSales,
+                backgroundColor: '#38bdf8'
             }]
         },
         options: {
@@ -159,31 +129,22 @@
                 datalabels: {
                     anchor: 'end',
                     align: 'end',
-                    formatter: function(value) {
-                        return value.toLocaleString() + ' 원';
-                    },
-                    color: '#0c4a6e',
-                    font: {
-                        weight: 'bold'
-                    }
+                    formatter: (value) => value.toLocaleString() + ' 원',
+                    font: { weight: 'bold' },
+                    color: '#0f172a'
                 },
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
-                            return context.parsed.y.toLocaleString() + ' 원';
-                        }
+                        label: context => context.parsed.y.toLocaleString() + ' 원'
                     }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: maxValue,
                     ticks: {
-                        callback: function(value) {
-                            return value.toLocaleString() + ' 원';
-                        }
+                        callback: value => value.toLocaleString() + ' 원'
                     }
                 }
             },
@@ -193,11 +154,7 @@
         plugins: [ChartDataLabels]
     });
 
-    // 총 매출액 계산 및 출력
-    const total = salesData.reduce((acc, val) => acc + val, 0);
-    document.getElementById('total-sales').textContent = `총 매출액: ${total.toLocaleString()} 원`;
-
-    function updateDatePickers() {
+    function updatePickers() {
         const unit = document.getElementById("unit").value;
         const startInput = document.getElementById("startDate");
         const endInput = document.getElementById("endDate");
@@ -205,11 +162,14 @@
         if (window.startInstance) window.startInstance.destroy();
         if (window.endInstance) window.endInstance.destroy();
 
-        // 입력값 그대로 유지하고 플러그인만 다시 설정
         if (unit === "day") {
+            startInput.value ||= "2025-06-10";
+            endInput.value ||= "2025-06-22";
             window.startInstance = flatpickr(startInput, { dateFormat: "Y-m-d", locale: "ko" });
             window.endInstance = flatpickr(endInput, { dateFormat: "Y-m-d", locale: "ko" });
-        } else if (unit === "month") {
+        } else {
+            startInput.value ||= "2025-01";
+            endInput.value ||= "2025-06";
             window.startInstance = flatpickr(startInput, {
                 plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: "Y-m" })],
                 locale: "ko"
@@ -222,42 +182,19 @@
     }
 
     function validateForm() {
-        const unit = document.getElementById("unit").value;
+        const start = document.getElementById("startDate").value;
+        const end = document.getElementById("endDate").value;
 
-        let start = document.getElementById("startDate").value;
-        let end = document.getElementById("endDate").value;
-
-        const startDate = new Date(start);
-        const endDate = new Date(end);
-        const minDate = new Date("2025-01-22");
-
-        if (startDate > endDate) {
-            alert("시작 날짜가 끝나는 날짜보다 늦습니다.");
-            return false;
-        }
-
-        let diff = 0;
-        if (unit === "day") {
-            diff = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-        } else if (unit === "month") {
-            diff = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()) + 1;
-        }
-
-        if (diff > 15) {
-            alert("최대 그래프의 개수는 15개 입니다.");
-            return false;
-        }
-
-        if (endDate < minDate) {
-            alert("해당 마트는 2025년 1월 22일부터 영업되었습니다.");
+        if (new Date(start) > new Date(end)) {
+            alert("시작 날짜가 종료 날짜보다 늦습니다.");
             return false;
         }
 
         return true;
     }
 
-    document.addEventListener("DOMContentLoaded", updateDatePickers);
-    document.getElementById("unit").addEventListener("change", updateDatePickers);
+    document.addEventListener("DOMContentLoaded", updatePickers);
+    document.getElementById("unit").addEventListener("change", updatePickers);
 </script>
 
 </body>
