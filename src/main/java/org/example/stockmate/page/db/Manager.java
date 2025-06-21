@@ -1,6 +1,5 @@
 package org.example.stockmate.page.db;
 
-
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

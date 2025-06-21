@@ -1,6 +1,5 @@
 package org.example.stockmate.page.db;
 
-
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -35,13 +34,18 @@ public class Product{
     @Column(name = "count", columnDefinition = "bigint", nullable = false)
     private Long count;
 
+    @Column(name = "price", columnDefinition = "bigint", nullable = false)
+    private Long price;
+
     @Builder
-    public Product(Long id, String name, Category category, SubCategory subCategory, char saleYn, Long count) {
+
+    public Product(Long id, String name, Category category, SubCategory subCategory, char saleYn, Long count, Long price) {
         this.id = id;
         this.name = name;
         this.category = category;
         this.subCategory = subCategory;
         this.saleYn = saleYn;
         this.count = count;
+        this.price = price;
     }
 }
