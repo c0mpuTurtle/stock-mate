@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>총 매출액</title>
+    <link href="https://cdn.jsdelivr.net/npm/suitcss@0.0.1/dist/suit.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background-color: #e0f2fe;
+            font-family: 'SUIT Variable', 'Pretendard', sans-serif;
+            color: #0c4a6e;
+        }
+
+        header {
+            background-color: #ffffff;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.7rem;
+            font-weight: 700;
+            gap: 0.5rem;
+            color: #0c4a6e;
+        }
+
+        .header-title .icon {
+            font-size: 1.8rem;
+        }
+
+        .login-button {
+            background-color: #0c4a6e;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-button:hover {
+            background-color: #e0f2fe;
+            color: #0c4a6e;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 3rem auto;
+            background-color: white;
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        form {
+            margin-bottom: 2rem;
+        }
+
+        select, input[type="month"], button {
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+        }
+
+        button {
+            background-color: #0c4a6e;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-top: 2rem;
+            background-color: #d1eaff;
+            color: #0c4a6e;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-button:hover {
+            background-color: #bae6fd;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: 400px !important; /* 그래프 길이 늘림 */
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-title">
+        <span class="icon">📊</span>
+        <span>StockMate 매출 시각화</span>
+    </div>
+    <a th:href="@{/login}" class="login-button">로그인</a>
+</header>
+
+<div class="container">
+    <h1>총 매출액 시각화</h1>
+
+    <form method="get" th:action="@{/sales/total}">
+        <label for="startDate">시작 월</label>
+        <input type="month" id="startDate" name="startDate" th:value="${startDate}" required>
+
+        <label for="endDate">종료 월</label>
+        <input type="month" id="endDate" name="endDate" th:value="${endDate}" required>
+
+        <select name="unit" id="unit">
+            <option value="month" th:selected="${unit == 'month'}">월별</option>
+            <option value="year" th:selected="${unit == 'year'}">연별</option>
+        </select>
+
+        <button type="submit">조회</button>
+    </form>
+
+    <canvas id="salesChart"></canvas>
+
+    <a th:href="@{/}" class="back-button">← 메인으로 돌아가기</a>
+</div>
+
+<script th:inline="javascript">
+    const labels = [[${labels}]];
+    const salesData = [[${salesData}]];
+    const hasData = salesData.length > 0 && salesData.some(val => val > 0);
+
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '총 매출액',
+                data: salesData,
+                backgroundColor: '#3b82f6'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: hasData ? undefined : 100000000,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' 원';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y.toLocaleString() + ' 원';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

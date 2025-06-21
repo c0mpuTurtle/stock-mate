@@ -20,7 +20,7 @@ public class Order{
     @Column(name = "user_id", columnDefinition = "bigint", nullable = false)
     private Long userId;
 
-    @Column(name = "date", columnDefinition = "varchar(10)", nullable = false)
+    @Column(name = "date", columnDefinition = "varchar(30)", nullable = false)
     private String date;
 
     @Builder
