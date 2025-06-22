@@ -2,11 +2,11 @@ package org.example.stockmate.page.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.stockmate.page.repository.OrderDetailRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -63,4 +63,57 @@ public class SalesService {
 
         return resultMap;
     }
+
+
+        public List<Map<String, Object>> getProductSalesSummary(String start, String end, String sortOption) {
+            String formattedStart = start.replace("-", "");
+            String formattedEnd = end.replace("-", "");
+
+            List<Object[]> rows;
+
+            // ⬇️ 정렬 옵션에 따라 분기
+            if ("total_asc".equals(sortOption)) {
+                rows = orderDetailRepository.getProductSalesSummaryAsc(formattedStart, formattedEnd);
+            } else {
+                rows = orderDetailRepository.getProductSalesSummaryDesc(formattedStart, formattedEnd);
+            }
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object[] row : rows) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("name", row[0]);
+                map.put("category", row[1]);
+                map.put("subCategory", row[2]);
+                map.put("price", row[3]);
+                map.put("count", row[4]);
+                map.put("total", row[5]);
+                result.add(map);
+            }
+            return result;
+        }
+
+    public List<Map<String, Object>> getProductSalesSummaryByCount(String start, String end, String sortOption) {
+        String formattedStart = start.replace("-", "");
+        String formattedEnd = end.replace("-", "");
+
+        List<Object[]> rows = "count_asc".equals(sortOption)
+                ? orderDetailRepository.getProductSalesSummaryByCountAsc(formattedStart, formattedEnd)
+                : orderDetailRepository.getProductSalesSummaryByCountDesc(formattedStart, formattedEnd);
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Object[] row : rows) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("name", row[0]);
+            map.put("category", row[1]);
+            map.put("subCategory", row[2]);
+            map.put("price", row[3]);
+            map.put("count", row[4]);
+            map.put("total", row[5]);
+            result.add(map);
+        }
+        return result;
+    }
+
+
 }
+

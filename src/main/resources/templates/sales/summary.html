@@ -2,22 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>상품별 매출액</title>
+    <title>상품별 매출 요약</title>
     <link href="https://cdn.jsdelivr.net/npm/suitcss@0.0.1/dist/suit.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
     <style>
         body {
-            margin: 0;
-            background-color: #e0f2fe;
+            background-color: #f0f9ff;
             font-family: 'SUIT Variable', 'Pretendard', sans-serif;
+            margin: 0;
+            padding: 0;
             color: #0c4a6e;
         }
+
         header {
             background-color: #ffffff;
             padding: 1.5rem 2rem;
@@ -26,14 +26,12 @@
             align-items: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
         }
+
         .header-title {
-            display: flex;
-            align-items: center;
             font-size: 1.7rem;
             font-weight: 700;
-            gap: 0.5rem;
-            color: #0c4a6e;
         }
+
         .login-button {
             background-color: #0c4a6e;
             color: white;
@@ -42,55 +40,120 @@
             font-weight: 500;
             text-decoration: none;
         }
+
         .container {
             max-width: 1200px;
-            margin: 3rem auto;
-            background-color: white;
-            padding: 3rem;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #fff;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-            text-align: center;
-            position: relative;
         }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
         select, input[type="text"], button {
-            padding: 0.5rem 1rem;
-            margin: 0.5rem;
+            padding: 0.6rem 1rem;
             font-size: 1rem;
             border: 1px solid #cbd5e1;
             border-radius: 8px;
         }
+
         button {
             background-color: #0c4a6e;
             color: white;
             cursor: pointer;
         }
-        .top-right {
-            position: absolute;
-            top: 2rem;
-            right: 3rem;
+
+        button:hover {
+            background-color: #2563eb;
         }
-        canvas {
-            max-width: 100%;
-            height: 500px !important;
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.8rem;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+        }
+
+        th {
+            background-color: #e0f2fe;
+            font-weight: 600;
+        }
+
+        td {
+            background-color: #f9fafb;
+        }
+
+        th:nth-child(4), td:nth-child(4) {
+            width: 140px;
+        }
+
+        th:nth-child(6), td:nth-child(6) {
+            width: 160px;
+        }
+
+        .search-sort-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .search-sort-bar input, .search-sort-bar select {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
+        #pagination {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        #pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background-color: white;
+            color: #0c4a6e;
+            cursor: pointer;
+        }
+
+        #pagination button.active {
+            background-color: #0c4a6e;
+            color: white;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="header-title">
-        <span>📦</span>
-        <span>상품별 매출 현황</span>
-    </div>
-    <a th:href="@{/login}" class="login-button">로그인</a>
+    <div class="header-title">📋 상품별 매출 요약</div>
+    <a th:href="@{/home}" class="login-button">← 메인으로 돌아가기</a>
 </header>
 
 <div class="container">
-    <div class="top-right">
-        <a th:href="@{/home}" class="login-button">← 메인으로 돌아가기</a>
-    </div>
+    <h1>상품별 매출 요약표</h1>
 
-    <form method="get" th:action="@{/sales/product}" onsubmit="return validateForm();">
+    <form method="get" th:action="@{/sales/summary}" onsubmit="return validateForm()">
         <label for="unit">단위 선택</label>
         <select name="unit" id="unit">
             <option value="day" th:selected="${unit == 'day'}">일별</option>
@@ -106,75 +169,64 @@
         <button type="submit">조회</button>
     </form>
 
-    <canvas id="productSalesChart"></canvas>
+    <div class="search-sort-bar">
+        <div>
+            <label for="sortOption">정렬: </label>
+            <select id="sortOption" onchange="sortTable()">
+                <option value="total_desc">매출액 높은 순</option>
+                <option value="total_asc">매출액 낮은 순</option>
+            </select>
+        </div>
+        <div>
+            <label for="searchInput">상품 검색: </label>
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="상품명을 입력하세요">
+        </div>
+    </div>
+
+    <table id="salesTable">
+        <thead>
+        <tr>
+            <th>상품명</th>
+            <th>카테고리</th>
+            <th>소카테고리</th>
+            <th>가격</th>
+            <th>판매 수량</th>
+            <th>총 매출액</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${summary}">
+            <td th:text="${row.name}"></td>
+            <td th:text="${row.category}"></td>
+            <td th:text="${row.subCategory}"></td>
+            <td th:text="${#numbers.formatInteger(row.price, 0, 'COMMA')} + ' 원'"></td>
+            <td th:text="${row.count}"></td>
+            <td th:text="${#numbers.formatInteger(row.total, 0, 'COMMA')} + ' 원'"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div id="pagination"></div>
 </div>
 
-<script th:inline="javascript">
-    const productLabels = [[${productLabels}]]; // 상품명 배열
-    const productSales = [[${productSales}]];   // 상품별 총 매출액 배열
-
-    const ctx = document.getElementById('productSalesChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: productLabels,
-            datasets: [{
-                label: '상품별 총 매출액',
-                data: productSales,
-                backgroundColor: '#38bdf8'
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    anchor: 'end',
-                    align: 'end',
-                    formatter: (value) => value.toLocaleString() + ' 원',
-                    font: { weight: 'bold' },
-                    color: '#0f172a'
-                },
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: context => context.parsed.y.toLocaleString() + ' 원'
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => value.toLocaleString() + ' 원'
-                    }
-                }
-            },
-            responsive: true,
-            maintainAspectRatio: false
-        },
-        plugins: [ChartDataLabels]
-    });
-
-    function updatePickers() {
+<script>
+    function updateDatePickers() {
         const unit = document.getElementById("unit").value;
         const startInput = document.getElementById("startDate");
         const endInput = document.getElementById("endDate");
 
-        if (window.startInstance) window.startInstance.destroy();
-        if (window.endInstance) window.endInstance.destroy();
+        if (window.startPicker) window.startPicker.destroy();
+        if (window.endPicker) window.endPicker.destroy();
 
         if (unit === "day") {
-            startInput.value ||= "2025-06-10";
-            endInput.value ||= "2025-06-22";
-            window.startInstance = flatpickr(startInput, { dateFormat: "Y-m-d", locale: "ko" });
-            window.endInstance = flatpickr(endInput, { dateFormat: "Y-m-d", locale: "ko" });
+            window.startPicker = flatpickr(startInput, { dateFormat: "Y-m-d", locale: "ko" });
+            window.endPicker = flatpickr(endInput, { dateFormat: "Y-m-d", locale: "ko" });
         } else {
-            startInput.value ||= "2025-01";
-            endInput.value ||= "2025-06";
-            window.startInstance = flatpickr(startInput, {
+            window.startPicker = flatpickr(startInput, {
                 plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: "Y-m" })],
                 locale: "ko"
             });
-            window.endInstance = flatpickr(endInput, {
+            window.endPicker = flatpickr(endInput, {
                 plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: "Y-m" })],
                 locale: "ko"
             });
@@ -182,19 +234,124 @@
     }
 
     function validateForm() {
+        const unit = document.getElementById("unit").value;
         const start = document.getElementById("startDate").value;
         const end = document.getElementById("endDate").value;
 
-        if (new Date(start) > new Date(end)) {
+        const startDate = new Date(unit === "month" ? start + "-01" : start);
+        const endDate = new Date(unit === "month" ? end + "-01" : end);
+        const minDate = new Date("2025-01-22");
+
+        if (startDate > endDate) {
             alert("시작 날짜가 종료 날짜보다 늦습니다.");
+            return false;
+        }
+
+        let diff = 0;
+        if (unit === "day") {
+            diff = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        } else {
+            diff = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()) + 1;
+        }
+
+        if (diff > 15) {
+            alert("최대 15개까지 조회 가능합니다.");
+            return false;
+        }
+
+        if (endDate < minDate) {
+            alert("해당 마트는 2025년 1월 22일부터 영업되었습니다.");
             return false;
         }
 
         return true;
     }
 
-    document.addEventListener("DOMContentLoaded", updatePickers);
-    document.getElementById("unit").addEventListener("change", updatePickers);
+    function filterTable() {
+        const input = document.getElementById("searchInput").value.toLowerCase();
+        const rows = document.querySelectorAll("#salesTable tbody tr");
+        rows.forEach(row => {
+            const name = row.cells[0].textContent.toLowerCase();
+            row.style.display = name.includes(input) ? "" : "none";
+        });
+    }
+
+    const tbody = document.getElementById("salesTable").getElementsByTagName("tbody")[0];
+    const allRows = Array.from(tbody.rows);
+    const pagination = document.getElementById("pagination");
+
+    let currentPage = 1;
+    let currentBlock = 1;
+    const rowsPerPage = 10;
+    const pageBlockSize = 10;
+
+    function displayPage(page) {
+        currentPage = page;
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+
+        allRows.forEach((row, index) => {
+            row.style.display = index >= start && index < end ? "" : "none";
+        });
+
+        renderPagination();
+    }
+
+    function renderPagination() {
+        pagination.innerHTML = "";
+        const totalPages = Math.ceil(allRows.length / rowsPerPage);
+        const totalBlocks = Math.ceil(totalPages / pageBlockSize);
+
+        currentBlock = Math.ceil(currentPage / pageBlockSize);
+        const blockStart = (currentBlock - 1) * pageBlockSize + 1;
+        const blockEnd = Math.min(blockStart + pageBlockSize - 1, totalPages);
+
+        if (currentBlock > 1) {
+            const prev = document.createElement("button");
+            prev.textContent = "←";
+            prev.onclick = () => displayPage(blockStart - 1);
+            pagination.appendChild(prev);
+        }
+
+        for (let i = blockStart; i <= blockEnd; i++) {
+            const btn = document.createElement("button");
+            btn.textContent = i;
+            btn.classList.toggle("active", i === currentPage);
+            btn.onclick = () => displayPage(i);
+            pagination.appendChild(btn);
+        }
+
+        if (currentBlock < totalBlocks) {
+            const next = document.createElement("button");
+            next.textContent = "→";
+            next.onclick = () => displayPage(blockEnd + 1);
+            pagination.appendChild(next);
+        }
+    }
+
+    function sortTable() {
+        const rows = Array.from(tbody.rows);
+        const sortOption = document.getElementById("sortOption").value;
+
+        rows.sort((a, b) => {
+            const aVal = Number(a.cells[5].textContent.replace(/[^\d]/g, ""));
+            const bVal = Number(b.cells[5].textContent.replace(/[^\d]/g, ""));
+            return sortOption === "total_desc" ? bVal - aVal : aVal - bVal;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+        allRows.length = 0;
+        allRows.push(...Array.from(tbody.rows));
+
+        displayPage(1);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        updateDatePickers();
+        displayPage(1);
+    });
+
+    document.getElementById("unit").addEventListener("change", updateDatePickers);
 </script>
 
 </body>
